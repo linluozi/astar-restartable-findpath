@@ -239,11 +239,14 @@ Reading the table honestly:
 * **`verify.py` also runs a short benchmark, and its numbers are deliberately
   not folded into the ranges above.** It runs alongside whatever else the
   machine is doing, so it answers "is the patch still faster and still
-  equivalent" — not "how much faster". Two such runs gave 1.46/3.35/5.37/2.48/
-  3.16/5.89× and 1.19/3.66/4.43/3.05/3.07/5.16×; the second one straddles the
-  low end of four ranges, which is exactly why its output is a pass/fail check
-  and not a measurement. The rule this document follows: numbers measured under
-  different conditions are never averaged into one range.
+  equivalent" — not "how much faster". Three such runs gave 1.46/3.35/5.37/
+  2.48/3.16/5.89×, 1.19/3.66/4.43/3.05/3.07/5.16× and 1.48/3.99/5.24/2.82/
+  4.67/6.43×. Read the per-case spread across those three: 100×100 never leaves
+  1.2–1.5×, 12×12 swings between 3.07× and 4.67× on identical code, and the
+  maze between 5.16× and 6.43×. That is the whole argument for treating the
+  stopwatch as a sanity check and the counters as the result. The rule this
+  document follows: numbers measured under different conditions are never
+  averaged into one range.
 * open 100×100 is the weakest claim: 1.28× here, 1.64× in session 1, and a
   session-2 ratio range of 1.08–4.72 that is wider than the A/A band. The
   direction never reverses, the magnitude is not measurable beyond "about
