@@ -224,21 +224,26 @@ and no session comparison:
 
 Reading the table honestly:
 
-* **600×600 has the narrowest spread of the six** (4.33–5.37× over six runs,
-  against 5.89–7.87× for the maze), and it is the case the patch is actually
-  about: it is also where the deterministic counters move the most (19.45×
-  fewer bytes, 300× fewer cost-function calls). The two 9-round sessions gave
-  4.58× and 4.60×, so the centre of the range is around 4.6×.
-* Four further runs (5 rounds each, from fresh extractions of the shipped ZIP)
+* **600×600 has the narrowest spread of the six** (4.33–4.92× over the five
+  clean runs, against 6.02–7.87× for the maze), and it is the case the patch is
+  actually about: it is also where the deterministic counters move the most
+  (19.45× fewer bytes, 300× fewer cost-function calls).
+* Three further runs (5 rounds each, from fresh extractions of the shipped ZIP)
   landed *between* the two sessions, not next to either: 1.31/4.10/4.92/1.97/
-  3.46/7.87×, 1.50/2.82/4.33/3.16/3.18/6.51×, 1.39/4.11/4.49/3.60/3.56/6.19×
-  and — the last one, from `verify.py` — 1.46/3.35/5.37/2.48/3.16/5.89×.
-  Across all six runs the observed ranges, in table order, are **1.3–1.6× /
-  2.8–4.3× / 4.3–5.4× / 2.0–3.6× / 2.8–3.9× / 5.9–7.9×**. These are minima and
+  3.46/7.87×, 1.50/2.82/4.33/3.16/3.18/6.51× and 1.39/4.11/4.49/3.60/3.56/6.19×.
+  Across all five runs the observed ranges, in table order, are **1.3–1.6× /
+  2.8–4.3× / 4.3–4.9× / 2.0–3.6× / 2.8–3.9× / 6.0–7.9×**. These are minima and
   maxima over observed runs, not guarantees: with an A/A floor that reaches 1.3
-  on this machine, a further single run can land outside them, and a seventh
-  run would most likely widen them again. Anything narrower than a range would
-  be a point estimate dressed up as a result.
+  on this machine, a further single run can land outside them. Anything narrower
+  than a range would be a point estimate dressed up as a result.
+* **`verify.py` also runs a short benchmark, and its numbers are deliberately
+  not folded into the ranges above.** It runs alongside whatever else the
+  machine is doing, so it answers "is the patch still faster and still
+  equivalent" — not "how much faster". Two such runs gave 1.46/3.35/5.37/2.48/
+  3.16/5.89× and 1.19/3.66/4.43/3.05/3.07/5.16×; the second one straddles the
+  low end of four ranges, which is exactly why its output is a pass/fail check
+  and not a measurement. The rule this document follows: numbers measured under
+  different conditions are never averaged into one range.
 * open 100×100 is the weakest claim: 1.28× here, 1.64× in session 1, and a
   session-2 ratio range of 1.08–4.72 that is wider than the A/A band. The
   direction never reverses, the magnitude is not measurable beyond "about
