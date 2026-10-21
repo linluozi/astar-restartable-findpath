@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>astar — restartable A* · optdelta</title>
+<style>
+  :root{
+    --ink:#2b2119; --paper:#faf6f0; --card:#f4ece1;
+    --amber:#c8892b; --terra:#b4552f; --olive:#6b6b3a;
+    --muted:#8a7a68; --rule:#d9cfc2;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font:16px/1.72 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 28px}
+  h1,h2,h3{font-family:Georgia,"Songti SC","Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  a{color:var(--terra);text-decoration:none;border-bottom:1px solid rgba(180,85,47,.32)}
+  a:hover{border-bottom-color:var(--terra)}
+  code{font-family:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace;font-size:.86em;
+       background:rgba(43,33,25,.055);padding:.06em .32em;border-radius:2px}
+  h2 code{background:none;padding:0;font-family:Georgia,"Songti SC",serif;
+          font-style:italic;color:var(--terra);font-size:.95em}
+
+  header{padding:88px 0 56px;border-bottom:1px solid var(--rule)}
+  .kicker{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+          margin-bottom:22px}
+  .kicker b{color:var(--terra);font-weight:600}
+  h1{font-size:clamp(34px,5.4vw,58px);line-height:1.1;margin:0 0 20px}
+  .lede{font-size:clamp(17px,2vw,20px);line-height:1.62;color:#3d3128;max-width:47em;margin:0}
+  .lede em{font-style:normal;color:var(--terra);font-weight:600}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:48px;
+         border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+  .stat{padding:22px 18px 20px;border-right:1px solid var(--rule)}
+  .stat:last-child{border-right:0}
+  .stat .n{font-family:Georgia,serif;font-size:clamp(26px,3.4vw,36px);line-height:1;
+           color:var(--terra);font-weight:600}
+  .stat .u{font-size:13px;color:var(--muted);margin-top:9px;line-height:1.45}
+
+  section{padding:66px 0;border-bottom:1px solid var(--rule)}
+  .num{font-family:Georgia,serif;font-size:13px;letter-spacing:.14em;color:var(--amber);
+       margin-bottom:12px}
+  h2{font-size:clamp(24px,3.2vw,32px);margin:0 0 22px;line-height:1.22}
+  p{margin:0 0 18px;max-width:46em}
+  .muted{color:var(--muted);font-size:14.5px}
+
+  figure{margin:34px 0 10px}
+  figure img{width:100%;height:auto;display:block;border:1px solid var(--rule);
+             border-radius:4px;background:#fff}
+  figure a{border-bottom:0;display:block}
+  figcaption{font-size:13.5px;color:var(--muted);line-height:1.6;margin-top:12px;max-width:52em}
+
+  ol.steps{margin:22px 0 0;padding:0;list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;position:relative;padding:0 0 20px 44px;max-width:47em}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:1px;
+    width:25px;height:25px;border-radius:50%;border:1px solid var(--amber);color:var(--amber);
+    font-size:12.5px;line-height:23px;text-align:center;font-family:Georgia,serif}
+  ol.steps b{font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin:26px 0 8px;font-size:14.5px}
+  th,td{padding:11px 12px;text-align:right;border-bottom:1px solid var(--rule)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-weight:600;color:var(--muted);font-size:12.5px;letter-spacing:.05em;
+           text-transform:uppercase;border-bottom:1px solid var(--ink)}
+  tbody tr:last-child td{border-bottom:1px solid var(--ink)}
+  td .win{color:var(--olive);font-weight:600}
+
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:14px 34px;margin-top:26px;
+          font-size:14.5px;max-width:52em}
+  .checks div{padding-left:24px;position:relative;color:#3d3128}
+  .checks div::before{content:"✓";position:absolute;left:0;color:var(--olive);font-weight:700}
+
+  .note{margin-top:34px;padding:20px 24px;background:var(--card);border-left:3px solid var(--amber);
+        border-radius:0 4px 4px 0;font-size:14.5px;line-height:1.66;max-width:52em}
+  .note b{color:var(--terra)}
+
+  footer{padding:52px 0 72px;font-size:14px;color:var(--muted)}
+  footer p{max-width:52em}
+  .links{margin-top:8px}
+  .links a{margin-right:22px}
+
+  @media (max-width:760px){
+    .wrap{padding:0 20px}
+    header{padding:56px 0 40px}
+    .stats{grid-template-columns:1fr 1fr}
+    .stat{border-bottom:1px solid var(--rule)}
+    .stat:nth-child(2n){border-right:0}
+    .stat:nth-last-child(-n+2){border-bottom:0}
+    .checks{grid-template-columns:1fr}
+    table{font-size:13px}
+    th,td{padding:9px 6px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">fzipp/astar v0.3.0 &nbsp;·&nbsp; Go &nbsp;·&nbsp; <b>BSD-3-Clause</b></div>
+    <h1>A* that can change its mind</h1>
+    <p class="lede">
+      Upstream closes every expanded node <em>forever</em> and rebuilds the whole
+      candidate path on every relaxation. The first habit returns a sub-optimal
+      path whenever the heuristic is admissible but not consistent; the second
+      makes a single search copy 4.7&nbsp;million nodes. One rewrite fixes both.
+    </p>
+    <div class="stats">
+      <div class="stat">
+        <div class="n">4.6<span style="font-size:.55em">×</span></div>
+        <div class="u">faster on the 600×600 grid<br>4.3–5.4× across six runs</div>
+      </div>
+      <div class="stat">
+        <div class="n">15.8<span style="font-size:.55em">×</span></div>
+        <div class="u">less peak working set<br>27.5&nbsp;MB → 1.7&nbsp;MB</div>
+      </div>
+      <div class="stat">
+        <div class="n">300<span style="font-size:.55em">×</span></div>
+        <div class="u">fewer cost-function calls<br>same nodes, same order</div>
+      </div>
+      <div class="stat">
+        <div class="n">28→0</div>
+        <div class="u">sub-optimal answers out of<br>3,000 random admissible graphs</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="num">01 — DEFECT</div>
+    <h2>The closed set is a lie for inconsistent heuristics</h2>
+    <p>
+      A* may return early — and may refuse to re-open a node — only if the
+      heuristic is <em>consistent</em>, i.e. <code>h(u) ≤ cost(u,v) + h(v)</code>
+      for every edge. The package documentation never says that. Both of its
+      examples pass the same function as cost and as heuristic, which is
+      admissible but not necessarily consistent.
+    </p>
+    <p>
+      With an inconsistent heuristic, queue order stops being cost order. The
+      destination pops before a cheaper route has reached it, and a node that is
+      later reached more cheaply is discarded at the top of the loop.
+    </p>
+
+    <figure>
+      <a href="docs/img/fig-counterexample.png" target="_blank" rel="noopener">
+        <img src="docs/img/fig-counterexample.png"
+             alt="A 7-node graph where the heuristic is admissible but inconsistent; upstream returns 5.19 instead of 4.96">
+      </a>
+      <figcaption>
+        The smallest counterexample found by random search: 7 nodes, 9 edges,
+        <code>h</code> never overestimates the true remaining cost, verified
+        against Dijkstra. Node 3 closes at <code>f = 3.62</code>; the cheaper
+        route to it (1.13 + 1.26 = 2.39) arrives afterwards and is dropped.
+        Optimal answer 4.96, upstream answer 5.19.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <a href="docs/img/fig-dcalls.png" target="_blank" rel="noopener">
+        <img src="docs/img/fig-dcalls.png"
+             alt="Cost-function calls follow 4E(E+1)-5 exactly on open grids, and differ 50x to 300x between arms">
+      </a>
+      <figcaption>
+        Left: the second defect has a closed form. Upstream re-walks every edge
+        of the candidate path on each push, so on an 8-connected open grid it
+        calls <code>d</code> exactly <code>4E(E+1) − (8 − deg(start))</code>
+        times, where <code>E</code> is the number of expansions. Measured and
+        predicted agree to the unit at 99, 299 and 599 expansions.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="num">02 — CHANGE</div>
+    <h2>Carry <code>g</code>, keep one entry per node, allow re-opening</h2>
+
+    <figure style="margin-top:8px">
+      <a href="docs/img/fig-mechanism.png" target="_blank" rel="noopener">
+        <img src="docs/img/fig-mechanism.png"
+             alt="Three changes between upstream and the patch">
+      </a>
+    </figure>
+
+    <ol class="steps">
+      <li><b>The path is never rebuilt during the search.</b> Each queue entry
+        stores the cost <code>g</code> it arrived with, so priority is
+        <code>g + h</code> — one call to <code>h</code> per improving relaxation,
+        not one per edge of a copied path.</li>
+      <li><b>One open-set entry per node.</b> An improved node has its key
+        lowered in place with <code>heap.Fix</code>; a node that has already been
+        popped is pushed again. There are no stale duplicates to skip.</li>
+      <li><b>Re-opening is allowed.</b> Combined with “return only when the
+        destination is popped with its final <code>g</code>”, the result is
+        optimal for every admissible heuristic, consistent or not. The path is
+        reconstructed once, at the end, from a predecessor table.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="num">03 — MEASUREMENT</div>
+    <h2>Absolute numbers, and the range they live in</h2>
+
+    <figure style="margin-top:8px">
+      <a href="docs/img/fig-measured.png" target="_blank" rel="noopener">
+        <img src="docs/img/fig-measured.png"
+             alt="Wall clock and peak working set per workload, upstream versus patched">
+      </a>
+      <figcaption>
+        Medians over interleaved A/B rounds, one benchmark per process. The A/A
+        column of the same binary moves 0.9–1.6× on this machine, so every
+        speedup below is quoted as a range rather than a point estimate.
+      </figcaption>
+    </figure>
+
+    <table>
+      <thead>
+        <tr><th>workload</th><th>upstream</th><th>patched</th><th>speed</th><th>peak WS</th><th>d calls</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>open 100×100</td><td>0.47 ms</td><td>0.37 ms</td><td class="win">1.3–1.6×</td><td>2.0×</td><td class="win">50×</td></tr>
+        <tr><td>open 300×300</td><td>4.06 ms</td><td>1.03 ms</td><td class="win">2.8–4.3×</td><td>7.9×</td><td class="win">150×</td></tr>
+        <tr><td>open 600×600</td><td>11.74 ms</td><td>2.35 ms</td><td class="win">4.3–5.4×</td><td>15.8×</td><td class="win">300×</td></tr>
+        <tr><td>rooms 8×8</td><td>2.10 ms</td><td>0.61 ms</td><td class="win">2.0–3.6×</td><td>3.2×</td><td class="win">82×</td></tr>
+        <tr><td>rooms 12×12</td><td>4.71 ms</td><td>1.14 ms</td><td class="win">2.8–3.9×</td><td>6.1×</td><td class="win">124×</td></tr>
+        <tr><td>maze 41×41</td><td>3.94 ms</td><td>0.55 ms</td><td class="win">5.9–7.9×</td><td>7.5×</td><td class="win">151×</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">
+      Timings from two 9-round sessions plus four shorter runs; the range spans all
+      four, because the same case moved 3.43× → 2.46× between sessions on an
+      unchanged binary. The last two columns are deterministic counters and do not
+      move at all between runs.
+    </p>
+
+    <div class="note">
+      <b>Why the counters are the stronger evidence.</b> Timing on one machine
+      drifts by tens of percent. <code>d</code>-call counts do not: they follow a
+      closed form that both arms reproduce bit for bit, and the two arms expand
+      exactly the same number of nodes on every consistent-heuristic workload —
+      599, 299, 248, 164, 631. The patch does not search less; it stops
+      re-walking paths it has already costed.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="num">04 — VERIFICATION</div>
+    <h2>What is proven, and what is not</h2>
+
+    <div class="checks">
+      <div>Bundled upstream sources byte-identical to v0.3.0</div>
+      <div>Patch reproduces the patched tree byte for byte</div>
+      <div>Upstream's 5 tests pass on the patched tree</div>
+      <div>10 added tests pass, 3 of them fail upstream</div>
+      <div>gofmt and go vet clean</div>
+      <div>Builds and vets for linux/amd64 (CI's target)</div>
+      <div>Peak memory read from the kernel high-water mark</div>
+      <div>verify.py: 15 checks from a fresh extraction</div>
+    </div>
+
+    <div class="note">
+      <b>Not proven:</b> the Linux CI job was never executed on a Linux kernel —
+      no container runtime on this machine, so only compilation, vetting and test
+      compilation were reproduced for <code>GOOS=linux</code>. Peak memory is a
+      Windows measurement (<code>psapi.dll</code>). And on ties the patched
+      version may return a different, equally optimal path than upstream; the
+      cost is what is guaranteed, not the node sequence.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      A patch to <a href="https://github.com/fzipp/astar">fzipp/astar</a> v0.3.0
+      (commit <code>2b743c6</code>), released under the same BSD 3-Clause licence.
+      The original <code>LICENSE</code> is shipped unchanged; every modification
+      is listed in <code>NOTICE.md</code>.
+    </p>
+    <div class="links">
+      <a href="https://github.com/linluozi/astar-restartable-findpath">Source</a>
+      <a href="https://github.com/linluozi/astar-restartable-findpath/blob/main/README.md">README</a>
+      <a href="https://github.com/linluozi/astar-restartable-findpath/tree/main/evidence">Raw evidence</a>
+      <a href="https://github.com/linluozi/astar-restartable-findpath/blob/main/patch/astar-reopen.patch">Patch</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

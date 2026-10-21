@@ -1,0 +1,45 @@
+{
+  "go": 0,
+  "host_os": "nt",
+  "steps": [
+    {
+      "step": "go test -cover ./... (upstream tree, baseline)",
+      "ok": true,
+      "detail": "ok  \tgithub.com/fzipp/astar\t0.092s\tcoverage: 100.0% of statements"
+    },
+    {
+      "step": "go test -cover ./... (patched tree, CI command verbatim)",
+      "ok": true,
+      "detail": "ok  \tgithub.com/fzipp/astar\t0.156s\tcoverage: 87.9% of statements"
+    },
+    {
+      "step": "GOOS=linux GOARCH=amd64 go build ./...",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "GOOS=linux GOARCH=amd64 go vet ./...",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "GOOS=linux GOARCH=amd64 go test -c (test binary compiles)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "gofmt -l clean (LF-normalised copies)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "go vet ./... (host platform)",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "not_reproduced": [
+    "executing the test binary on a Linux kernel: no container runtime, no WSL distribution and no gcc on this machine"
+  ],
+  "ci_scope_note": "upstream build.yml runs `go test -cover ./...` on ubuntu-latest with go-version '1.x'; it does not use -race, cgo, build tags, files, network or goroutines, so a Linux-only runtime difference is not expected, but it was not executed on Linux and is not claimed."
+}
